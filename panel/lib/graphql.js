@@ -13,14 +13,17 @@ const fetcher = async query => {
   return json.data
 }
 
-const useQuery = query => {
+const useQuery = queryStr => {
+  const query = {
+    query: queryStr
+  }
   return useSWR(JSON.stringify(query), fetcher)
 }
 const useMutation = query => {
   const [data, setData] = useState()
   const mutate = async variables => {
     const mutation = {
-      ...query,
+      query,
       variables
     }
     try {

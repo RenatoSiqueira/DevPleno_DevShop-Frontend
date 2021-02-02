@@ -1,13 +1,18 @@
 import React from 'react'
-import { useQuery } from '../../lib/graphql'
+import { useQuery, useMutation } from '../../lib/graphql'
 import Link from 'next/link'
 
 import Layout from '../../components/Layout'
 import Title from '../../components/Title'
 import Table from '../../components/Table'
 
-const query = {
-  query: `
+const DELETE_CATEGORY = `
+mutation deleteCategory($id: String!) {
+  deleteCategory (id: $id) 
+}
+`
+
+const GET_ALL_CATEGORIES = `
     query {
       getAllCategories{
         id
@@ -16,10 +21,15 @@ const query = {
       }
     }
   `
-}
 
 const Index = () => {
-  const { data, error } = useQuery(query)
+  const { data, mutate } = useQuery(GET_ALL_CATEGORIES)
+  const [deleteData, deleteCategory] = useMutation(DELETE_CATEGORY)
+
+  const remove = id => async () => {
+    await deleteCategory({ id })
+    mutate()
+  }
   return (
     <Layout>
       <Title>Gerenciar categorias</Title>
@@ -31,17 +41,21 @@ const Index = () => {
       </div>
       <div className='flex flex-col mt-8'>
         <div className='-my-2 py-2 overflow-x-auto sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8'>
-          <div className='align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200'>
-            <Table>
-              <Table.Head>
-                <Table.Th>Categorias</Table.Th>
-                <Table.Th></Table.Th>
-              </Table.Head>
+          {data &&
+            data.getAllCategories &&
+            data.getAllCategories.length === 0 && (
+              <p>Nenhuma Categoria Criada.</p>
+            )}
+          {data && data.getAllCategories && data.getAllCategories.length > 0 && (
+            <div className='align-middle inline-block min-w-full shadow overflow-hidden sm:rounded-lg border-b border-gray-200'>
+              <Table>
+                <Table.Head>
+                  <Table.Th>Categorias</Table.Th>
+                  <Table.Th></Table.Th>
+                </Table.Head>
 
-              <Table.Body>
-                {data &&
-                  data.getAllCategories &&
-                  data.getAllCategories.map(item => {
+                <Table.Body>
+                  {data.getAllCategories.map(item => {
                     return (
                       <Table.Tr key={item.id}>
                         <Table.Td>
@@ -64,13 +78,21 @@ const Index = () => {
                           >
                             Edit
                           </a>
+                          <a
+                            href='#'
+                            onClick={remove(item.id)}
+                            className='ml-4 text-indigo-600 hover:text-indigo-900'
+                          >
+                            Remove
+                          </a>
                         </Table.Td>
                       </Table.Tr>
                     )
                   })}
-              </Table.Body>
-            </Table>
-          </div>
+                </Table.Body>
+              </Table>
+            </div>
+          )}
         </div>
       </div>
     </Layout>
